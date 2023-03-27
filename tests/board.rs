@@ -42,7 +42,7 @@ impl Board {
 
     fn place_card(&self, row: usize, column: usize, card: Card) -> Board {
       let mut board_clone = self.clone(); 
-      board_clone.cells[(row * column) % 3] = Some(card);
+      board_clone.cells[(row * 3) + column] = Some(card);
       board_clone
     }
 
@@ -74,33 +74,24 @@ impl Board {
       for row in 0..3 {
         let mut line: [String; 3] = ["  |".to_string(), format!("{} |", 3 - row), "  |".to_string()];
         for column in 0..3 {
-          line[0].push_str("       |");
-          line[1].push_str("       |");
-          line[2].push_str("       |");
+          let cell = self.cells[(row * 3) + column];
+          if let Some(card) = cell {
+            line[0].push_str(format!("   {}   |", 2).as_str());
+            line[1].push_str(format!("{}  {}  {}|", 2, "o", 2).as_str());
+            line[2].push_str(format!("   {}   |", 2).as_str());
+          } else {
+            line[0].push_str("       |");
+            line[1].push_str("       |");
+            line[2].push_str("       |");
+          }
         }
         board.push_str(line.join("\n").as_str());
         board.push_str("\n");
         board.push_str(line_separator);
       }
       board.push_str(last_line);
-      // println!("{}", board);
+      println!("{}", board);
       return board;
-//       return "
-//   -------------------------
-//   |       |       |       |
-// 3 |       |       |       |
-//   |       |       |       |
-//   -------------------------
-//   |       |       |       |
-// 2 |       |       |       |
-//   |       |       |       |
-//   -------------------------
-//   |       |       |       |
-// 1 |       |       |       |
-//   |       |       |       |
-//   -------------------------
-//       A       B       C
-// ".to_string();
     }
 }
 
