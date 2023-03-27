@@ -46,7 +46,7 @@ impl Board {
       board_clone
     }
 
-    // pub(self) fn display_cells(card: Option<Card>) -> String {
+    // pub(self) fn display_cells(&self, card: Option<Card>) -> String {
     //   if let Some(card) = card {
     //     let top = format!("   {}   ", 2);
     //     let center = format!("{}  {}  {}", 2, "o", 2);
@@ -61,30 +61,46 @@ impl Board {
     //   }
     // }
 
-    // pub(self) fn display_row() -> String {
+    // pub(self) fn display_row(&self) -> String {
     //   return "".to_string();      
     // }
 
     fn display(&self) -> String {
-      for (index, cell) in self.cells.iter().enumerate() {
-        // TODO : Fill this with the algorithm to pretty print the beautifull board bellow
+      let line_separator = "  -------------------------\n";
+      let last_line = "      A       B       C\n";
+      let mut board = "\n".to_string();
+      board.push_str(line_separator);
+
+      for row in 0..3 {
+        let mut line: [String; 3] = ["  |".to_string(), format!("{} |", 3 - row), "  |".to_string()];
+        for column in 0..3 {
+          line[0].push_str("       |");
+          line[1].push_str("       |");
+          line[2].push_str("       |");
+        }
+        board.push_str(line.join("\n").as_str());
+        board.push_str("\n");
+        board.push_str(line_separator);
       }
-        return "
-  -------------------------
-  |       |       |       |
-3 |       |       |       |
-  |       |       |       |
-  -------------------------
-  |       |       |       |
-2 |       |       |       |
-  |       |       |       |
-  -------------------------
-  |       |       |       |
-1 |       |       |       |
-  |       |       |       |
-  -------------------------
-      A       B       C
-".to_string();
+      board.push_str(last_line);
+      // println!("{}", board);
+      return board;
+//       return "
+//   -------------------------
+//   |       |       |       |
+// 3 |       |       |       |
+//   |       |       |       |
+//   -------------------------
+//   |       |       |       |
+// 2 |       |       |       |
+//   |       |       |       |
+//   -------------------------
+//   |       |       |       |
+// 1 |       |       |       |
+//   |       |       |       |
+//   -------------------------
+//       A       B       C
+// ".to_string();
     }
 }
 
