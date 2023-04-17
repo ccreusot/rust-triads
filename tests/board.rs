@@ -13,10 +13,37 @@ enum Strength {
   A
 }
 
+impl Strength {
+  fn to_value(&self) -> char {
+    match self {
+      Strength::One => '1',
+      Strength::Two => '2',
+      Strength::Three => '3',
+      Strength::Four => '4',
+      Strength::Five => '5',
+      Strength::Six => '6',
+      Strength::Seven => '7',
+      Strength::Eight => '8',
+      Strength::Nine => '9',
+      Strength::A => 'A'    
+    }
+  }
+}
+
+
 #[derive(Clone, Copy)]
 enum Owner {
   PlayerOne,
   PlayerTwo
+}
+
+impl Owner {
+  fn to_sign(self) -> String {
+    match self {
+        Owner::PlayerOne => "o".to_string(),
+        Owner::PlayerTwo => "x".to_string()
+    }
+  }
 }
 
 #[derive(Clone, Copy)]
@@ -29,41 +56,53 @@ struct Card {
 }
 
 #[derive(Clone, Copy)]
+enum Cell {
+  Card {
+    card: Card,
+  },
+  Empty
+}
+
+impl Cell {
+  fn to_lines(&self) -> [String; 3] {
+    match self {
+      Cell::Card { card } => card.to_lines(),
+      Cell::Empty => [
+        "       |".to_string(),
+        "       |".to_string(),
+        "       |".to_string(),
+        ] 
+    }
+  }
+}
+
+impl Card {
+  fn to_lines(&self) -> [String; 3] {
+    [
+      format!("   {}   |", self.top.to_value()),
+      format!("{}  {}  {}|", self.left.to_value(), self.owner.to_sign(), self.right.to_value()),
+      format!("   {}   |", self.bottom.to_value())
+    ]
+  }
+}
+
+#[derive(Clone, Copy)]
 struct Board {
-  cells: [Option<Card>;9]
+  cells: [Cell;9]
 }
 
 impl Board {
     fn new() -> Board {
         Board {
-          cells: [Option::None; 9]
+          cells: [Cell::Empty; 9]
         }
     }
 
     fn place_card(&self, row: usize, column: usize, card: Card) -> Board {
       let mut board_clone = self.clone(); 
-      board_clone.cells[(row * 3) + column] = Some(card);
+      board_clone.cells[(row * 3) + column] = Cell::Card { card: card };
       board_clone
     }
-
-    // pub(self) fn display_cells(&self, card: Option<Card>) -> String {
-    //   if let Some(card) = card {
-    //     let top = format!("   {}   ", 2);
-    //     let center = format!("{}  {}  {}", 2, "o", 2);
-    //     let bottom = format!("   {}   ", 2);
-    //     return "
-    //     {top}
-    //     {center}
-    //     {bottom}
-    //     ".to_string();
-    //   } else {
-    //     return "".to_string();
-    //   }
-    // }
-
-    // pub(self) fn display_row(&self) -> String {
-    //   return "".to_string();      
-    // }
 
     fn display(&self) -> String {
       let line_separator = "  -------------------------\n";
@@ -74,16 +113,10 @@ impl Board {
       for row in 0..3 {
         let mut line: [String; 3] = ["  |".to_string(), format!("{} |", 3 - row), "  |".to_string()];
         for column in 0..3 {
-          let cell = self.cells[(row * 3) + column];
-          if let Some(card) = cell {
-            line[0].push_str(format!("   {}   |", 2).as_str());
-            line[1].push_str(format!("{}  {}  {}|", 2, "o", 2).as_str());
-            line[2].push_str(format!("   {}   |", 2).as_str());
-          } else {
-            line[0].push_str("       |");
-            line[1].push_str("       |");
-            line[2].push_str("       |");
-          }
+          let cell = self.cells[(row * 3) + column].to_lines();
+          line[0].push_str(cell[0].as_str());
+          line[1].push_str(cell[1].as_str());
+          line[2].push_str(cell[2].as_str());
         }
         board.push_str(line.join("\n").as_str());
         board.push_str("\n");
@@ -141,6 +174,35 @@ mod board_tests {
       A       B       C
 ";
       let board = Board::new().place_card(1, 1, Card { owner: Owner::PlayerOne, top: Strength::Two, left: Strength::Two, bottom: Strength::Two, right: Strength::Two });
+      assert_eq!(expected, board.display());
+    }
+
+    #[test]
+    fn test_display_board_filled_with_two_card() {
+      let expected = "
+  -------------------------
+  |       |       |       |
+3 |       |       |       |
+  |       |       |       |
+  -------------------------
+  |       |   2   |       |
+2 |       |1  o  4|       |
+  |       |   3   |       |
+  -------------------------
+  |   5   |       |       |
+1 |8  x  6|       |       |
+  |   A   |       |       |
+  -------------------------
+      A       B       C
+";
+
+      let board = Board::new()
+      .place_card(1, 1, Card {
+        owner: Owner::PlayerOne, top: Strength::Two, left: Strength::One, bottom: Strength::Three, right: Strength::Four
+      })
+      .place_card(2, 0, Card {
+        owner: Owner::PlayerTwo, top: Strength::Five, left: Strength::Eight, bottom: Strength::A, right: Strength::Six
+      });
       assert_eq!(expected, board.display());
     }
 }
