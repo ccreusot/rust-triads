@@ -13,6 +13,10 @@ impl Board {
         }
     }
 
+    pub fn get_cell(&self, row: usize, column: usize) -> Cell {
+        self.cells[(row * 3) + column]
+    }
+
     pub fn place_card(&self, row: usize, column: usize, card: Card) -> Board {
         let mut board_clone = self.clone();
         board_clone.cells[(row * 3) + column] = Cell::Card { card: card };
