@@ -73,7 +73,11 @@ impl Game{
     }
 
     fn player_input(&self, row: usize, column: usize, card: Card) -> Game {
+        // Card we have the current owner and player that is playing
         let board = self.board.place_card(row, column, card);
+        // We need to get the cells that are neighbors of the cell we are placing the card
+        // TODO 
+
         if card.owner == Owner::PlayerOne {
             let mut game = self.clone();
             game.player_a =  self.player_a.remove_card(card);
@@ -85,6 +89,10 @@ impl Game{
             game.board = board;
             game
         }
+    }
+
+    fn get_winner(&self) -> Option<String> {
+        None
     }
 }
 
@@ -126,5 +134,58 @@ mod game_tests {
         }
 
         assert_eq!(game.player_a.hand, vec![]);
+    }
+
+    #[test]
+    fn test_player_two_is_the_current_player_after_player_one() {
+        let hand_generator = NotRandomHandGenerator::new(vec![
+            Card { owner: Owner::PlayerOne, top: Strength::Two, left: Strength::Two, bottom: Strength::Two, right: Strength::Two },
+        ]);
+        let mut game = Game::new(hand_generator);
+
+        game = game.player_input(1, 1, game.player_a.hand[0]);
+        game = game.player_input(1, 2, game.player_b.hand[0]);
+
+        if let Cell::Card { card } = game.board.get_cell(1, 2) {
+            assert_eq!(card.owner, Owner::PlayerTwo);
+        }
+
+        assert_eq!(game.player_b.hand, vec![]);
+    }
+
+    #[test]
+    fn test_when_all_card_have_played_end_of_the_game_if_both_player_have_the_same_number_of_cards_on_the_board_it_should_be_a_tie() {
+        let hand_generator = NotRandomHandGenerator::new(vec![
+            Card { owner: Owner::PlayerOne, top: Strength::Two, left: Strength::Two, bottom: Strength::Two, right: Strength::Two },
+        ]);
+        let mut game = Game::new(hand_generator);
+
+        game = game.player_input(1, 1, game.player_a.hand[0]);
+        game = game.player_input(1, 2, game.player_b.hand[0]);
+
+        assert_eq!(game.player_a.hand, vec![]);
+        assert_eq!(game.player_b.hand, vec![]);
+        assert_eq!(game.get_winner(), None);
+    }
+
+    #[test]
+    fn test_when_all_card_have_played_end_of_the_game_if_player_one_has_more_cards_on_the_board_than_player_two_player_one_win() {
+        let hand_generator = NotRandomHandGenerator::new(vec![
+            Card { owner: Owner::PlayerOne, top: Strength::Two, left: Strength::Two, bottom: Strength::Two, right: Strength::Two },
+            Card { owner: Owner::PlayerOne, top: Strength::Two, left: Strength::Two, bottom: Strength::Two, right: Strength::One },
+            Card { owner: Owner::PlayerOne, top: Strength::Two, left: Strength::Two, bottom: Strength::Two, right: Strength::Two },
+        ]);
+        let mut game = Game::new(hand_generator);
+
+        game = game.player_input(0, 0, game.player_a.hand[0]);
+        game = game.player_input(0, 1, game.player_b.hand[1]);
+        game = game.player_input(0, 2, game.player_a.hand[0]);
+        game = game.player_input(1, 0, game.player_b.hand[0]);
+        game = game.player_input(1, 1, game.player_a.hand[0]);
+        game = game.player_input(1, 2, game.player_b.hand[0]);
+
+        assert_eq!(game.player_a.hand, vec![]);
+        assert_eq!(game.player_b.hand, vec![]);
+        assert_eq!(game.get_winner(), Some("Player A".to_string()));
     }
 }

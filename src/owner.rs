@@ -1,14 +1,14 @@
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Owner {
     PlayerOne,
-    PlayerTwo
+    PlayerTwo,
 }
 
 impl Owner {
     pub fn to_sign(self) -> String {
         match self {
             Owner::PlayerOne => "o".to_string(),
-            Owner::PlayerTwo => "x".to_string()
+            Owner::PlayerTwo => "x".to_string(),
         }
     }
 }

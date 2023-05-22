@@ -1,12 +1,9 @@
-
 use crate::card::Card;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Cell {
-    Card {
-        card: Card,
-    },
-    Empty
+    Card { card: Card },
+    Empty,
 }
 
 impl Cell {
@@ -17,7 +14,7 @@ impl Cell {
                 "       |".to_string(),
                 "       |".to_string(),
                 "       |".to_string(),
-            ]
+            ],
         }
     }
 }

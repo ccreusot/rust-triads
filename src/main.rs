@@ -1,9 +1,9 @@
-mod owner;
+mod board;
 mod card;
 mod cell;
-mod strength;
-mod board;
 mod game;
+mod owner;
+mod strength;
 
 fn main() {
     println!("Hello, world!");

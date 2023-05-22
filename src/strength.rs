@@ -1,4 +1,3 @@
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Strength {
     One,
@@ -10,7 +9,7 @@ pub enum Strength {
     Seven,
     Eight,
     Nine,
-    A
+    A,
 }
 
 impl Strength {
@@ -25,7 +24,7 @@ impl Strength {
             Strength::Seven => '7',
             Strength::Eight => '8',
             Strength::Nine => '9',
-            Strength::A => 'A'
+            Strength::A => 'A',
         }
     }
 }
