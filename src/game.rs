@@ -75,8 +75,6 @@ impl Game{
     fn player_input(&self, row: usize, column: usize, card: Card) -> Game {
         // Card we have the current owner and player that is playing
         let board = self.board.place_card(row, column, card);
-        // We need to get the cells that are neighbors of the cell we are placing the card
-        // TODO 
 
         if card.owner == Owner::PlayerOne {
             let mut game = self.clone();
@@ -89,7 +87,33 @@ impl Game{
             game.board = board;
             game
         }
-    }
+
+        // We need to get the cells that are neighbors of the cell we are placing the card
+        if let Some(oponent_neighbor) = card.get_top_neighbor(self.board, row, column) {
+            if oponent_neighbor.bottom < card.top {
+                // Win the card
+            }
+        }
+        if let Some(oponent_neighbor) = card.get_bottom_neighbor(self.board, row, column) {
+            if oponent_neighbor.top < card.bottom {
+                // Win the card
+            }
+        }
+        if let Some(oponent_neighbor) = card.get_left_neighbor(self.board, row, column) {
+            if oponent_neighbor.right < card.left {
+                // Win the card
+            }
+        }
+        if let Some(oponent_neighbor) = card.get_right_neighbor(self.board, row, column) {
+            if oponent_neighbor.left < card.right {
+                // Win the card
+            }
+        }
+
+
+
+
+   }
 
     fn get_winner(&self) -> Option<String> {
         None
@@ -169,11 +193,10 @@ mod game_tests {
     }
 
     #[test]
-    fn test_when_all_card_have_played_end_of_the_game_if_player_one_has_more_cards_on_the_board_than_player_two_player_one_win() {
+    fn test_when_the_player_one_win_the_game_after_capturing_a_card_from_player_two_and_all_the_card_have_been_played() {
         let hand_generator = NotRandomHandGenerator::new(vec![
             Card { owner: Owner::PlayerOne, top: Strength::Two, left: Strength::Two, bottom: Strength::Two, right: Strength::Two },
             Card { owner: Owner::PlayerOne, top: Strength::Two, left: Strength::Two, bottom: Strength::Two, right: Strength::One },
-            Card { owner: Owner::PlayerOne, top: Strength::Two, left: Strength::Two, bottom: Strength::Two, right: Strength::Two },
         ]);
         let mut game = Game::new(hand_generator);
 
@@ -181,8 +204,6 @@ mod game_tests {
         game = game.player_input(0, 1, game.player_b.hand[1]);
         game = game.player_input(0, 2, game.player_a.hand[0]);
         game = game.player_input(1, 0, game.player_b.hand[0]);
-        game = game.player_input(1, 1, game.player_a.hand[0]);
-        game = game.player_input(1, 2, game.player_b.hand[0]);
 
         assert_eq!(game.player_a.hand, vec![]);
         assert_eq!(game.player_b.hand, vec![]);

@@ -1,5 +1,7 @@
 use crate::owner::Owner;
 use crate::strength::Strength;
+use crate::board::Board;
+use crate::cell::Cell;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Card {
@@ -23,4 +25,24 @@ impl Card {
             format!("   {}   |", self.bottom.to_value()),
         ]
     }
+
+    pub fn get_bottom_neighbor(board: &Board, row: usize, column: usize) -> Option<Card> {
+       if let Some(Cell::Card { card }) = board.get_cell(row + 1, column) {
+           return Some(card);
+       }
+       return None
+    }
+
+    pub fn get_top_neighbor(board: &Board, row: usize, column: usize) -> Option<Card> {
+        board.get_cell(row - 1, column)
+    }
+
+    pub fn get_left_neighbor(board: &Board, row: usize, column: usize) -> Option<Card> {
+        board.get_cell(row, column - 1)
+    }
+
+    pub fn get_right_neighbor(board: &Board, row: usize, column: usize) -> Option<Card> {
+        board.get_cell(row, column + 1)
+    }
+
 }

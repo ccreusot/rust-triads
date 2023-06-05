@@ -13,25 +13,16 @@ impl Board {
         }
     }
 
-    pub fn get_cell(&self, row: usize, column: usize) -> Cell {
-        self.cells[(row * 3) + column]
-    }
+    pub fn get_cell(&self, row: usize, column: usize) -> Option<Cell> {
+        if row > 2 || column > 2 {
+            return None;
+        }
 
-    pub fn get_neighbor(&self, row: usize, column: usize) -> Vec<Cell> {
-        let mut neighbors: Vec<Cell> = Vec::new();
-        if row > 0 {
-            neighbors.push(self.get_cell(row - 1, column));
+        if row < 0 || column < 0 {
+            return None;
         }
-        if row < 2 {
-            neighbors.push(self.get_cell(row + 1, column));
-        }
-        if column > 0 {
-            neighbors.push(self.get_cell(row, column - 1));
-        }
-        if column < 2 {
-            neighbors.push(self.get_cell(row, column + 1));
-        }
-        neighbors
+        
+        return Some(self.cells[(row * 3) + column])
     }
 
     pub fn place_card(&self, row: usize, column: usize, card: Card) -> Board {
@@ -176,61 +167,4 @@ mod board_tests {
         assert_eq!(expected, board.display());
     }
 
-    #[test]
-    fn test_give_the_neighbors_of_a_cell_from_cell_at_row_zero_and_column_zero() {
-        let board = Board::new();
-        let neighbors = board.get_neighbor(0, 0);
-        assert_eq!(2, neighbors.len());
-        assert_eq!(Cell::Empty, neighbors[0]);
-        assert_eq!(Cell::Empty, neighbors[1]);
-    }
-
-    #[test]
-    fn test_give_the_neighbors_of_a_cell_from_cell_at_row_zero_and_column_one() {
-        let board = Board::new();
-        let neighbors = board.get_neighbor(0, 1);
-        assert_eq!(3, neighbors.len());
-        assert_eq!(Cell::Empty, neighbors[0]);
-        assert_eq!(Cell::Empty, neighbors[1]);
-        assert_eq!(Cell::Empty, neighbors[2]);
-    }
-
-    #[test]
-    fn test_give_the_neighbors_of_a_cell_from_cell_at_row_zero_and_column_two() {
-        let board = Board::new();
-        let neighbors = board.get_neighbor(0, 2);
-        assert_eq!(2, neighbors.len());
-        assert_eq!(Cell::Empty, neighbors[0]);
-        assert_eq!(Cell::Empty, neighbors[1]);
-    }
-
-    #[test]
-    fn test_give_the_neighbors_of_a_cell_from_cell_at_row_one_and_column_zero() {
-        let board = Board::new();
-        let neighbors = board.get_neighbor(1, 0);
-        assert_eq!(3, neighbors.len());
-        assert_eq!(Cell::Empty, neighbors[0]);
-        assert_eq!(Cell::Empty, neighbors[1]);
-        assert_eq!(Cell::Empty, neighbors[2]);
-    }
-
-    #[test]
-    fn test_give_the_neighbors_of_a_cell_from_cell_at_row_one_and_column_one() {
-        let board = Board::new();
-        let neighbors = board.get_neighbor(1, 1);
-        assert_eq!(4, neighbors.len());
-        assert_eq!(Cell::Empty, neighbors[0]);
-        assert_eq!(Cell::Empty, neighbors[1]);
-        assert_eq!(Cell::Empty, neighbors[2]);
-        assert_eq!(Cell::Empty, neighbors[3]);
-    }
-
-    #[test]
-    fn test_give_the_neighbors_of_a_cell_from_cell_at_row_one_and_column_two() {
-        let board = Board::new();
-        let neighbors = board.get_neighbor(1, 2);
-        assert_eq!(3, neighbors.len());
-        assert_eq!(Cell::Empty, neighbors[0]);
-        assert_eq!(Cell::Empty, neighbors[1]);
-    }
 }
