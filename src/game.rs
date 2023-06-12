@@ -74,45 +74,61 @@ impl Game{
 
     fn player_input(&self, row: usize, column: usize, card: Card) -> Game {
         // Card we have the current owner and player that is playing
-        let board = self.board.place_card(row, column, card);
-
-        if card.owner == Owner::PlayerOne {
-            let mut game = self.clone();
-            game.player_a =  self.player_a.remove_card(card);
-            game.board = board;
-            game
-        } else {
-            let mut game = self.clone();
-            game.player_b =  self.player_b.remove_card(card);
-            game.board = board;
-            game
-        }
+        let mut board = self.board.place_card(row, column, card);
 
         // We need to get the cells that are neighbors of the cell we are placing the card
-        if let Some(oponent_neighbor) = card.get_top_neighbor(self.board, row, column) {
+        if let Some(oponent_neighbor) = board.get_top_neighbor(row, column) {
             if oponent_neighbor.bottom < card.top {
                 // Win the card
+                let won_card = Card {
+                    owner: card.owner,
+                    ..oponent_neighbor
+                };
+                board = board.place_card(row - 1, column, won_card);
             }
         }
-        if let Some(oponent_neighbor) = card.get_bottom_neighbor(self.board, row, column) {
+
+        if let Some(oponent_neighbor) = board.get_bottom_neighbor(row, column) {
             if oponent_neighbor.top < card.bottom {
                 // Win the card
+                let won_card = Card {
+                    owner: card.owner,
+                    ..oponent_neighbor
+                };
+                board = board.place_card(row + 1, column, won_card);
             }
         }
-        if let Some(oponent_neighbor) = card.get_left_neighbor(self.board, row, column) {
+
+        if let Some(oponent_neighbor) = board.get_left_neighbor(row, column) {
             if oponent_neighbor.right < card.left {
-                // Win the card
+               // Win the card
+                let won_card = Card {
+                    owner: card.owner,
+                    ..oponent_neighbor
+                };
+               board = board.place_card(row, column - 1, won_card); 
             }
         }
-        if let Some(oponent_neighbor) = card.get_right_neighbor(self.board, row, column) {
+
+        if let Some(oponent_neighbor) = board.get_right_neighbor(row, column) {
             if oponent_neighbor.left < card.right {
                 // Win the card
-            }
+                let won_card = Card {
+                    owner: card.owner,
+                    ..oponent_neighbor
+                };
+                board = board.place_card(row, column + 1, won_card);
+           }
         }
 
-
-
-
+        let mut game = self.clone();
+        if card.owner == Owner::PlayerOne {
+            game.player_a =  self.player_a.remove_card(card);
+        } else {
+            game.player_b =  self.player_b.remove_card(card);
+        }
+        game.board = board;
+        return game;
    }
 
     fn get_winner(&self) -> Option<String> {
@@ -153,7 +169,7 @@ mod game_tests {
 
         game = game.player_input(1, 1, game.player_a.hand[0]);
 
-        if let Cell::Card { card } = game.board.get_cell(1, 1) {
+        if let Some(Cell::Card { card }) = game.board.get_cell(1, 1) {
             assert_eq!(card.owner, Owner::PlayerOne);
         }
 
@@ -170,7 +186,7 @@ mod game_tests {
         game = game.player_input(1, 1, game.player_a.hand[0]);
         game = game.player_input(1, 2, game.player_b.hand[0]);
 
-        if let Cell::Card { card } = game.board.get_cell(1, 2) {
+        if let Some(Cell::Card { card }) = game.board.get_cell(1, 2) {
             assert_eq!(card.owner, Owner::PlayerTwo);
         }
 

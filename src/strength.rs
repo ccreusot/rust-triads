@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug)]
 pub enum Strength {
     One,
     Two,
@@ -13,7 +13,7 @@ pub enum Strength {
 }
 
 impl Strength {
-    pub fn to_value(&self) -> char {
+    pub fn to_char(&self) -> char {
         match self {
             Strength::One => '1',
             Strength::Two => '2',

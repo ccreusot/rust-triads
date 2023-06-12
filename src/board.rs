@@ -21,8 +21,35 @@ impl Board {
         if row < 0 || column < 0 {
             return None;
         }
-        
         return Some(self.cells[(row * 3) + column])
+    }
+
+    pub fn get_bottom_neighbor(&self, row: usize, column: usize) -> Option<Card> {
+       if let Some(Cell::Card { card }) = self.get_cell(row + 1, column) {
+           return Some(card);
+       }
+       return None
+    }
+
+    pub fn get_top_neighbor(&self, row: usize, column: usize) -> Option<Card> {
+       if let Some(Cell::Card { card }) = self.get_cell(row - 1, column) {
+           return Some(card);
+       }
+       return None
+    }
+
+    pub fn get_left_neighbor(&self, row: usize, column: usize) -> Option<Card> {
+       if let Some(Cell::Card { card }) = self.get_cell(row, column - 1) {
+           return Some(card);
+       }
+       return None
+    }
+
+    pub fn get_right_neighbor(&self, row: usize, column: usize) -> Option<Card> {
+       if let Some(Cell::Card { card }) = self.get_cell(row, column + 1) {
+           return Some(card);
+       }
+       return None
     }
 
     pub fn place_card(&self, row: usize, column: usize, card: Card) -> Board {

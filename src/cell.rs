@@ -1,6 +1,6 @@
 use crate::card::Card;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Cell {
     Card { card: Card },
     Empty,

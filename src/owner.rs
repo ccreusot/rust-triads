@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Owner {
     PlayerOne,
     PlayerTwo,
