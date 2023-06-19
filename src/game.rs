@@ -238,6 +238,7 @@ mod game_tests {
         ]);
         let mut game = Game::new(hand_generator);
 
+        // TODO : refactor
         game = game.player_input(0, 0, game.player_a.hand[0]);
         game = game.player_input(0, 1, game.player_b.hand[1]);
         game = game.player_input(0, 2, game.player_a.hand[0]);
