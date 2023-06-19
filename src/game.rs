@@ -1,5 +1,7 @@
 use crate::board::Board;
 use crate::card::Card;
+use crate::cell::Cell;
+use crate::cell::Cell::Empty;
 use crate::owner::Owner;
 use crate::strength::Strength;
 
@@ -55,7 +57,7 @@ struct Game {
     board: Board,
 }
 
-impl Game{
+impl Game {
     fn new(hand_generator: impl HandGenerator) -> Game {
         Game {
             player_a: Player {
@@ -101,12 +103,12 @@ impl Game{
 
         if let Some(oponent_neighbor) = board.get_left_neighbor(row, column) {
             if oponent_neighbor.right < card.left {
-               // Win the card
+                // Win the card
                 let won_card = Card {
                     owner: card.owner,
                     ..oponent_neighbor
                 };
-               board = board.place_card(row, column - 1, won_card); 
+                board = board.place_card(row, column - 1, won_card);
             }
         }
 
@@ -118,31 +120,51 @@ impl Game{
                     ..oponent_neighbor
                 };
                 board = board.place_card(row, column + 1, won_card);
-           }
+            }
         }
 
         let mut game = self.clone();
         if card.owner == Owner::PlayerOne {
-            game.player_a =  self.player_a.remove_card(card);
+            game.player_a = self.player_a.remove_card(card);
         } else {
-            game.player_b =  self.player_b.remove_card(card);
+            game.player_b = self.player_b.remove_card(card);
         }
         game.board = board;
         return game;
-   }
+    }
 
     fn get_winner(&self) -> Option<String> {
-        None
+        let score = self.board
+            .cells()
+            .into_iter()
+            .fold((0, 0),
+                  |(player1, player2), cell| match cell {
+                      Empty => (player1, player2),
+                      Cell::Card { card } => if card.owner == Owner::PlayerOne {
+                          (player1 + 1, player2)
+                      } else {
+                          (player1, player2 + 1)
+                      }
+                  },
+            );
+
+        if score.0 == score.1 {
+            None
+        } else if score.0 > score.1 {
+            Some(self.player_a.name.clone())
+        } else {
+            Some(self.player_b.name.clone())
+        }
     }
 }
 
 #[cfg(test)]
 mod game_tests {
     use crate::card::Card;
+    use crate::cell::Cell;
     use crate::game::{Game, NotRandomHandGenerator};
     use crate::owner::Owner;
     use crate::strength::Strength;
-    use crate::cell::Cell;
 
     #[test]
     fn test_has_2_players() {

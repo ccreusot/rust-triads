@@ -13,43 +13,52 @@ impl Board {
         }
     }
 
-    pub fn get_cell(&self, row: usize, column: usize) -> Option<Cell> {
-        if row > 2 || column > 2 {
-            return None;
-        }
+    pub fn cells(&self) -> Vec<Cell> {
+        self.cells.clone().to_vec()
+    }
 
-        if row < 0 || column < 0 {
-            return None;
-        }
-        return Some(self.cells[(row * 3) + column])
+    pub fn get_cell(&self, row: usize, column: usize) -> Option<Cell> {
+        return Some(self.cells[(row * 3) + column]);
     }
 
     pub fn get_bottom_neighbor(&self, row: usize, column: usize) -> Option<Card> {
-       if let Some(Cell::Card { card }) = self.get_cell(row + 1, column) {
-           return Some(card);
-       }
-       return None
+        if row == 2 {
+            return None
+        }
+        if let Some(Cell::Card { card }) = self.get_cell(row + 1, column) {
+            return Some(card);
+        }
+        None
     }
 
     pub fn get_top_neighbor(&self, row: usize, column: usize) -> Option<Card> {
-       if let Some(Cell::Card { card }) = self.get_cell(row - 1, column) {
-           return Some(card);
-       }
-       return None
+        if row == 0 {
+            return None
+        }
+        if let Some(Cell::Card { card }) = self.get_cell(row - 1, column) {
+            return Some(card);
+        }
+        None
     }
 
     pub fn get_left_neighbor(&self, row: usize, column: usize) -> Option<Card> {
-       if let Some(Cell::Card { card }) = self.get_cell(row, column - 1) {
-           return Some(card);
-       }
-       return None
+        if column == 0 {
+            return None
+        }
+        if let Some(Cell::Card { card }) = self.get_cell(row, column - 1) {
+            return Some(card);
+        }
+        None
     }
 
     pub fn get_right_neighbor(&self, row: usize, column: usize) -> Option<Card> {
-       if let Some(Cell::Card { card }) = self.get_cell(row, column + 1) {
-           return Some(card);
-       }
-       return None
+        if column == 2 {
+            return None
+        }
+        if let Some(Cell::Card { card }) = self.get_cell(row, column + 1) {
+            return Some(card);
+        }
+        None
     }
 
     pub fn place_card(&self, row: usize, column: usize, card: Card) -> Board {
@@ -193,5 +202,4 @@ mod board_tests {
             );
         assert_eq!(expected, board.display());
     }
-
 }
