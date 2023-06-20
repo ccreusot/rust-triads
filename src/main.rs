@@ -29,9 +29,16 @@ impl Game {
     }
 
     pub fn push(&self, command: Command) -> Game {
+        match self.state {
+            State::WaitingForPlayers { .. } => self.handle_command_for_waiting_for_player_state(command),
+            _ => panic!("State {:?}: Not implemented yet", self.state),
+        }
+    }
+
+    fn handle_command_for_waiting_for_player_state(&self, command: Command) -> Game {
         match command {
             Command::Register { name } => self.register_player(name),
-            _ => panic!("Command {:?}: Not implemented yet", command),
+            _ => self.clone(),
         }
     }
 
@@ -43,11 +50,15 @@ impl Game {
                 }
 
                 let mut _players = self.players.clone();
-                _players.push(Player{name, hand: vec![], owned_played_card: vec![]});
+                _players.push(Player {
+                    name,
+                    hand: vec![],
+                    owned_played_card: vec![],
+                });
 
                 return Game {
                     state: State::WaitingForCards { playerCount: 2 },
-                    players: _players
+                    players: _players,
                 };
             }
             return Game {
@@ -72,10 +83,28 @@ struct Card {
     left: u8,
 }
 
+impl Card {
+    pub fn sum(&self) -> u8 {
+        (self.top + self.right + self.bottom + self.left)
+    }
+}
+
+fn generate_card() -> Card {
+    use rand::Rng;
+    use uuid::Uuid;
+    use uuid::Builder;
+    
+    // TODO: use a better random generator for UUID
+    let mut rng = rand::thread_rng();
+    let random_array = [0u8; 16].into_iter().map(|_| rng.gen::<u8>()).to_array();
+
+    let uuid = Builder::from_random_bytes(rng.gen::<u8>()).into_uuid();
+
+    Card { id: format!("{}", uuid), top: 10, right: 10, bottom: 1, left: 1 }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 struct Player {
-    // id: u8,
-    // score: u32,
     name: String,
     hand: Vec<Card>,
     owned_played_card: Vec<Card>,
@@ -136,15 +165,19 @@ mod tests {
 
         assert_eq!(
             game.players,
-            vec![Player {
-                name: "Player 1".to_string(),
-                hand: vec![],
-                owned_played_card: vec![]
-            }, Player {
-                name: "Player 2".to_string(),
-                hand: vec![],
-                owned_played_card: vec![]}]
-            );
+            vec![
+                Player {
+                    name: "Player 1".to_string(),
+                    hand: vec![],
+                    owned_played_card: vec![]
+                },
+                Player {
+                    name: "Player 2".to_string(),
+                    hand: vec![],
+                    owned_played_card: vec![]
+                }
+            ]
+        );
     }
 
     #[test]
@@ -172,20 +205,22 @@ mod tests {
                 hand: vec![],
                 owned_played_card: vec![]
             }]
-            );
+        );
     }
-    
+
     #[test]
     fn when_the_game_is_in_waiting_for_player_it_should_only_process_register_command() {
-        // TODO : Improve test after another command is implemented
+        // Given
         let mut game = Game::new();
 
         game = game.push(Command::Register {
             name: "Player 1".to_string(),
         });
 
+        // When
         game = game.push(Command::ChoosePlayer);
-        
+
+        // Then
         assert_eq!(game.state, State::WaitingForPlayers { count: 1 });
 
         assert_eq!(
@@ -195,7 +230,28 @@ mod tests {
                 hand: vec![],
                 owned_played_card: vec![]
             }]
-            );
+        );
     }
 
+    #[test]
+    fn test_card_has_valid_values() {
+        let card = generate_card();
+
+        assert!(card.top >= 1 && card.top <= 10);
+        assert!(card.right >= 1 && card.right <= 10);
+        assert!(card.bottom >= 1 && card.bottom <= 10);
+        assert!(card.left >= 1 && card.left <= 10);
+    }
+
+    #[test]
+    fn test_card_has_valid_sum() {
+        let card = generate_card();
+
+        assert!(card.sum() >= 15 && card.sum() <= 25)
+    }
+
+    #[test]
+    fn test_card_has_valid_id() {
+        assert_ne!(generate_card().id, generate_card().id);
+    }
 }

@@ -32,7 +32,7 @@
 
 
 ## Génération aléatoire d'une carte
-La moyenne d'une cartes doit ce situer entre 15-25.
+La moyenne d'une carte doit ce situer entre 15-25.
 - On détermine la valeur de la carte aléatoirement entre 15 et 25.
 - On génère une première valeur entre 1 et 10.
 - Tu soustraits ta première valeur a la valeur entre 15 et 25 (Vt)
