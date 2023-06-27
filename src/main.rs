@@ -10,7 +10,8 @@ enum Command {
 #[derive(Clone, PartialEq, Debug)]
 enum State {
     WaitingForPlayers { count: u8 },
-    WaitingForCards { playerCount: u8 },
+    // Todo: When Player count decrement we generate a new list of card for the next player
+    WaitingForCards { playerCount: u8, deck: Vec<Card> },
 }
 
 #[derive(Clone, Debug)]
@@ -57,8 +58,12 @@ impl Game {
                     owned_played_card: vec![],
                 });
 
+                // TODO: Generate cards for the first players
                 return Game {
-                    state: State::WaitingForCards { playerCount: 2 },
+                    state: State::WaitingForCards {
+                        playerCount: 2,
+                        deck: 
+                     },
                     players: _players,
                 };
             }
@@ -91,7 +96,7 @@ impl Card {
 }
 
 fn generate_card(value: u8) -> Result<Card, String> {
-    if (value < 15 || value > 25) {
+    if value < 15 || value > 25 {
         return Err("Value should be between 15 and 25".to_string());
     }
     
@@ -173,7 +178,14 @@ mod tests {
             name: "Player 2".to_string(),
         });
 
-        assert_eq!(game.state, State::WaitingForCards { playerCount: 2 });
+        match game.state {
+            State::WaitingForCards { playerCount, deck } => 
+            {
+                assert_eq!(playerCount, 2);
+                assert_eq!(deck.len(), 10);
+            },
+            _ => assert!(false),
+        }
 
         assert_eq!(
             game.players,
