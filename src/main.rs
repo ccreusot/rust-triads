@@ -1,4 +1,3 @@
-
 #[derive(Clone, Debug)]
 enum Command {
     Register { name: String },
@@ -30,7 +29,9 @@ impl Game {
 
     pub fn push(&self, command: Command) -> Game {
         match self.state {
-            State::WaitingForPlayers { .. } => self.handle_command_for_waiting_for_player_state(command),
+            State::WaitingForPlayers { .. } => {
+                self.handle_command_for_waiting_for_player_state(command)
+            }
             _ => panic!("State {:?}: Not implemented yet", self.state),
         }
     }
@@ -89,18 +90,29 @@ impl Card {
     }
 }
 
-fn generate_card() -> Card {
+fn generate_card(value: u8) -> Result<Card, String> {
+    if (value < 15 || value > 25) {
+        return Err("Value should be between 15 and 25".to_string());
+    }
+    
     use rand::Rng;
     use uuid::Uuid;
-    use uuid::Builder;
-    
-    // TODO: use a better random generator for UUID
+    use std::cmp::min;
+
     let mut rng = rand::thread_rng();
-    let random_array = [0u8; 16].into_iter().map(|_| rng.gen::<u8>()).to_array();
 
-    let uuid = Builder::from_random_bytes(rng.gen::<u8>()).into_uuid();
+    let top = rng.gen_range(1..10);
+    let right = rng.gen_range(1..min(10, value - top));
+    let bottom = rng.gen_range(1..min(10, value - top - right));
+    let left = value - top - right - bottom;
 
-    Card { id: format!("{}", uuid), top: 10, right: 10, bottom: 1, left: 1 }
+    Ok(Card {
+        id: format!("{}", Uuid::new_v4()),
+        top: top,
+        right: right,
+        bottom: bottom,
+        left: left,
+    })
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -235,7 +247,7 @@ mod tests {
 
     #[test]
     fn test_card_has_valid_values() {
-        let card = generate_card();
+        let card = generate_card(15).unwrap();
 
         assert!(card.top >= 1 && card.top <= 10);
         assert!(card.right >= 1 && card.right <= 10);
@@ -244,14 +256,40 @@ mod tests {
     }
 
     #[test]
-    fn test_card_has_valid_sum() {
-        let card = generate_card();
+    fn test_card_can_not_have_value_under_15() {
+        for i in 1..14 {
+            let card = generate_card(i);
 
-        assert!(card.sum() >= 15 && card.sum() <= 25)
+            if let Err(_) = card {
+                assert!(true);
+            } else {
+                assert!(false);
+            }
+        }
     }
 
     #[test]
-    fn test_card_has_valid_id() {
-        assert_ne!(generate_card().id, generate_card().id);
+    fn test_card_can_not_have_value_above_25() {
+        for i in 26..100 {
+            let card = generate_card(i);
+
+            if let Err(_) = card {
+                assert!(true);
+            } else {
+                assert!(false);
+            }
+        }
+    }
+
+    #[test]
+    fn test_card_has_valid_sum() {
+        let card = generate_card(20).unwrap();
+
+        assert_eq!(card.sum(), 20);
+    }
+
+    #[test]
+    fn test_generate_card_does_not_generate_the_same_card_twice() {
+        assert_ne!(generate_card(15).unwrap().id, generate_card(15).unwrap().id);
     }
 }
