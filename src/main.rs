@@ -62,7 +62,7 @@ impl Game {
                 return Game {
                     state: State::WaitingForCards {
                         playerCount: 2,
-                        deck: 
+                        deck: generate_deck_of(10),
                      },
                     players: _players,
                 };
@@ -95,8 +95,11 @@ impl Card {
     }
 }
 
-fn generate_card(value: u8) -> Result<Card, String> {
+type Randomizer = fn(u8, u8) -> u8;
+
+fn generate_card(value: u8, randomizer: Option<Randomizer>) -> Result<Card, String> {
     if value < 15 || value > 25 {
+        //print!("Invalid value {:?}, should be between 15 and 25", value);
         return Err("Value should be between 15 and 25".to_string());
     }
     
@@ -104,20 +107,49 @@ fn generate_card(value: u8) -> Result<Card, String> {
     use uuid::Uuid;
     use std::cmp::min;
 
-    let mut rng = rand::thread_rng();
+    let gen_range = if let Some(Randomizer) = randomizer {
+        randomizer.unwrap()
+    } else {
+        |min: u8, max: u8| -> u8 {
+            let mut rng = rand::thread_rng();
+            rng.gen_range(min..=max)
+        }
+    };
 
-    let top = rng.gen_range(1..10);
-    let right = rng.gen_range(1..min(10, value - top));
-    let bottom = rng.gen_range(1..min(10, value - top - right));
+    let top = gen_range(1, 10);
+    let right = gen_range(1, min(10, value - top - 2));
+    let bottom = gen_range(1, min(10, value - top - right - 1));
     let left = value - top - right - bottom;
 
-    Ok(Card {
+    return Ok(Card {
         id: format!("{}", Uuid::new_v4()),
         top: top,
         right: right,
         bottom: bottom,
         left: left,
-    })
+    });
+}
+
+// TODO : try to redefine this function with a default value for randomizer
+fn generate_card(value: u8) -> Result<Card, String> {
+    generate_card(value, Option<Randomizer>::None)
+}
+
+fn generate_deck_of(count: u8) -> Vec<Card> {
+    use rand::Rng;
+
+    let mut rng = rand::thread_rng();    
+
+    let mut deck = vec![];
+    for _i in 0..count {
+        let value = rng.gen_range(15..26);
+        print!("{:?}", value);
+        match generate_card(value) {
+            Ok(card) => deck.push(card),
+            Err(_) => {}
+        }
+    }
+    return deck;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -259,8 +291,9 @@ mod tests {
 
     #[test]
     fn test_card_has_valid_values() {
-        let card = generate_card(15).unwrap();
+        let card: Card = generate_card(15).unwrap();
 
+        print!("{:?}", card);
         assert!(card.top >= 1 && card.top <= 10);
         assert!(card.right >= 1 && card.right <= 10);
         assert!(card.bottom >= 1 && card.bottom <= 10);
@@ -303,5 +336,12 @@ mod tests {
     #[test]
     fn test_generate_card_does_not_generate_the_same_card_twice() {
         assert_ne!(generate_card(15).unwrap().id, generate_card(15).unwrap().id);
+    }
+
+    #[test]
+    fn test_generate_deck_of_10_cards() {
+        let deck = generate_deck_of(10);
+
+        assert_eq!(deck.len(), 10);
     }
 }
