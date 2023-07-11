@@ -18,6 +18,7 @@ enum State {
 struct Game {
     state: State,
     players: Vec<Player>,
+    deck_generator: Box<dyn DeckGenerator>,
 }
 
 impl Game {
@@ -25,6 +26,7 @@ impl Game {
         Game {
             state: State::WaitingForPlayers { count: 2 },
             players: vec![],
+            deck_generator: Box::new(DeckGeneratorImpl {}),
         }
     }
 
@@ -62,9 +64,10 @@ impl Game {
                 return Game {
                     state: State::WaitingForCards {
                         playerCount: 2,
-                        deck: generate_deck_of(10),
+                        deck: self.deck_generator.generate_deck_of(10),
                      },
                     players: _players,
+                    deck_generator: self.deck_generator,
                 };
             }
             return Game {
@@ -74,6 +77,7 @@ impl Game {
                     hand: vec![],
                     owned_played_card: vec![],
                 }],
+                deck_generator: self.deck_generator,
             };
         }
         return self.clone();
@@ -97,28 +101,18 @@ impl Card {
 
 type Randomizer = fn(u8, u8) -> u8;
 
-fn generate_card(value: u8, randomizer: Option<Randomizer>) -> Result<Card, String> {
+fn generate_card_with_randomizer(value: u8, randomizer: Randomizer) -> Result<Card, String> {
+    use std::cmp::min;
+    use uuid::Uuid;
+    
     if value < 15 || value > 25 {
         //print!("Invalid value {:?}, should be between 15 and 25", value);
         return Err("Value should be between 15 and 25".to_string());
     }
-    
-    use rand::Rng;
-    use uuid::Uuid;
-    use std::cmp::min;
 
-    let gen_range = if let Some(Randomizer) = randomizer {
-        randomizer.unwrap()
-    } else {
-        |min: u8, max: u8| -> u8 {
-            let mut rng = rand::thread_rng();
-            rng.gen_range(min..=max)
-        }
-    };
-
-    let top = gen_range(1, 10);
-    let right = gen_range(1, min(10, value - top - 2));
-    let bottom = gen_range(1, min(10, value - top - right - 1));
+    let top = randomizer(1, 10);
+    let right = randomizer(1, min(10, value - top - 2));
+    let bottom = randomizer(1, min(10, value - top - right - 1));
     let left = value - top - right - bottom;
 
     return Ok(Card {
@@ -130,26 +124,80 @@ fn generate_card(value: u8, randomizer: Option<Randomizer>) -> Result<Card, Stri
     });
 }
 
-// TODO : try to redefine this function with a default value for randomizer
 fn generate_card(value: u8) -> Result<Card, String> {
-    generate_card(value, Option<Randomizer>::None)
+    generate_card_with_randomizer(value, |min: u8, max: u8| -> u8 {
+        use rand::Rng;
+
+        let mut rng = rand::thread_rng();
+        rng.gen_range(min..=max)
+    })
 }
 
-fn generate_deck_of(count: u8) -> Vec<Card> {
-    use rand::Rng;
+trait DeckGenerator {
+    fn generate_deck_of(self: &Self, count: u8) -> Vec<Card>;
+}
 
-    let mut rng = rand::thread_rng();    
+use core::fmt::Debug;
 
-    let mut deck = vec![];
-    for _i in 0..count {
-        let value = rng.gen_range(15..26);
-        print!("{:?}", value);
-        match generate_card(value) {
-            Ok(card) => deck.push(card),
-            Err(_) => {}
-        }
+impl Debug for dyn DeckGenerator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DeckGenerator").finish()
     }
-    return deck;
+}
+
+use core::clone::Clone;
+
+impl Clone for dyn DeckGenerator {
+    fn clone(&self) -> Self {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Clone, Debug)]
+struct DeckGeneratorImpl {}
+
+impl DeckGenerator for DeckGeneratorImpl {
+    fn generate_deck_of(self: &Self, count: u8) -> Vec<Card> {
+        use rand::Rng;
+    
+        let mut rng = rand::thread_rng();    
+    
+        let mut deck = vec![];
+        for _i in 0..count {
+            let value = rng.gen_range(15..26);
+            print!("{:?}", value);
+            match generate_card(value) {
+                Ok(card) => deck.push(card),
+                Err(_) => {}
+            }
+        }
+        return deck;
+    }
+}
+
+#[derive(Clone, Debug)]
+struct MockDeckGenerator {}
+
+impl DeckGenerator for MockDeckGenerator {
+    fn generate_deck_of(self: &Self, count: u8) -> Vec<Card> {
+        let mut deck = vec![];
+        for i in 0..count {
+            deck.push(Card { id: i.to_string(), top: 10, right: 3, bottom: 1, left: 7 })
+        }
+        return deck;
+    }
+}
+
+fn test2(generator: Box<dyn DeckGenerator>) {
+    generator.generate_deck_of(1);
+}
+
+fn test() {
+    let mut mock = Box::new(MockDeckGenerator{});
+    let mut concrete = Box::new(DeckGeneratorImpl{});
+
+    test2(mock);
+    test2(concrete);
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -201,8 +249,10 @@ mod tests {
     #[test]
     fn when_we_push_two_registering_commands_to_the_game_we_should_get_a_state_waiting_for_card_for_player_one(
     ) {
+        // Given
         let mut game = Game::new();
 
+        // When
         game = game.push(Command::Register {
             name: "Player 1".to_string(),
         });
@@ -210,6 +260,7 @@ mod tests {
             name: "Player 2".to_string(),
         });
 
+        // Then
         match game.state {
             State::WaitingForCards { playerCount, deck } => 
             {
@@ -340,7 +391,7 @@ mod tests {
 
     #[test]
     fn test_generate_deck_of_10_cards() {
-        let deck = generate_deck_of(10);
+        let deck = DeckGeneratorImpl{}.generate_deck_of(10);
 
         assert_eq!(deck.len(), 10);
     }
