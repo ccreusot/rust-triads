@@ -1,10 +1,10 @@
 #[derive(Clone, Debug, PartialEq)]
 pub struct Card {
-    id: String,
-    top: u8,
-    right: u8,
-    bottom: u8,
-    left: u8,
+    pub id: String,
+    pub top: u8,
+    pub right: u8,
+    pub bottom: u8,
+    pub left: u8,
 }
 
 impl Card {

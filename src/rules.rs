@@ -5,15 +5,15 @@ use crate::card::Card;
 
 pub trait Rules {
     // Setup rules
-    fn register_player(game: Game, name: String) -> Game;
+    fn register_player(&self, game: Game, name: String) -> Game;
 
     // Game rules
 }
 
-struct RulesImpl;
+pub struct RulesImpl;
 
 impl Rules for RulesImpl {
-    fn register_player(game: Game, name: String) -> Game {
+    fn register_player(&self, game: Game, name: String) -> Game {
         if let State::WaitingForPlayers { count } = game.state {
             if count - 1 == 0 {
                 if game.players[0].name == name {
@@ -98,4 +98,67 @@ fn generate_deck_of(count: u8) -> Vec<Card> {
         }
     }
     return deck;
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::card::Card;
+
+    #[test]
+    fn test_card_has_valid_values() {
+        let card: Card = generate_card(15).unwrap();
+
+        print!("{:?}", card);
+        assert!(card.top >= 1 && card.top <= 10);
+        assert!(card.right >= 1 && card.right <= 10);
+        assert!(card.bottom >= 1 && card.bottom <= 10);
+        assert!(card.left >= 1 && card.left <= 10);
+    }
+
+    #[test]
+    fn test_card_can_not_have_value_under_15() {
+        for i in 1..14 {
+            let card = generate_card(i);
+
+            if let Err(_) = card {
+                assert!(true);
+            } else {
+                assert!(false);
+            }
+        }
+    }
+
+    #[test]
+    fn test_card_can_not_have_value_above_25() {
+        for i in 26..100 {
+            let card = generate_card(i);
+
+            if let Err(_) = card {
+                assert!(true);
+            } else {
+                assert!(false);
+            }
+        }
+    }
+
+    #[test]
+    fn test_card_has_valid_sum() {
+        let card = generate_card(20).unwrap();
+
+        assert_eq!(card.sum(), 20);
+    }
+
+    #[test]
+    fn test_generate_card_does_not_generate_the_same_card_twice() {
+        assert_ne!(generate_card(15).unwrap().id, generate_card(15).unwrap().id);
+    }
+
+    #[test]
+    fn test_generate_deck_of_10_cards() {
+        let deck = generate_deck_of(10);
+
+        assert_eq!(deck.len(), 10);
+    }
+
 }
