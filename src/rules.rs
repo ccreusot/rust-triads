@@ -5,48 +5,18 @@ use crate::card::Card;
 
 pub trait Rules {
     // Setup rules
+
+    // In state: WaitingForPlayer
+    // Switch state: WaitingForPlayers.count == 0
+    // To state: WaitingForCards (players_count: 2, deck: Card[])
     fn register_player(&self, game: Game, name: String) -> Game;
 
+    // In state: WaitingForCards
+    // Switch state: WaitingForCards.players_count == 0 (5 cards per player)
+    // To state: ???
+    fn select_card(&self, game: Game, card_id: String) -> Game;
+
     // Game rules
-}
-
-pub struct RulesImpl;
-
-impl Rules for RulesImpl {
-    fn register_player(&self, game: Game, name: String) -> Game {
-        if let State::WaitingForPlayers { count } = game.state {
-            if count - 1 == 0 {
-                if game.players[0].name == name {
-                    return game.clone();
-                }
-
-                let mut _players = game.players.clone();
-                _players.push(Player {
-                    name,
-                    hand: vec![],
-                    owned_played_card: vec![],
-                });
-
-                // TODO: Generate cards for the first players
-                return Game {
-                    state: State::WaitingForCards {
-                        playerCount: 2,
-                        deck: generate_deck_of(10),
-                     },
-                    players: _players,
-                };
-            }
-            return Game {
-                state: State::WaitingForPlayers { count: count - 1 },
-                players: vec![Player {
-                    name,
-                    hand: vec![],
-                    owned_played_card: vec![],
-                }],
-            };
-        }
-        return game.clone();
-    }
 }
 
 type Randomizer = fn(u8, u8) -> u8;
@@ -98,6 +68,78 @@ fn generate_deck_of(count: u8) -> Vec<Card> {
         }
     }
     return deck;
+}
+
+pub struct RulesImpl;
+
+impl Rules for RulesImpl {
+    fn register_player(&self, game: Game, name: String) -> Game {
+        if let State::WaitingForPlayers { count } = game.state {
+            if count - 1 == 0 {
+                if game.players[0].name == name {
+                    return game.clone();
+                }
+
+                let mut _players = game.players.clone();
+                _players.push(Player {
+                    name,
+                    hand: vec![],
+                    owned_played_card: vec![],
+                });
+
+                // TODO: Generate cards for the first players
+                return Game {
+                    state: State::WaitingForCards {
+                        playerCount: 2,
+                        deck: generate_deck_of(10),
+                     },
+                    players: _players,
+                };
+            }
+            return Game {
+                state: State::WaitingForPlayers { count: count - 1 },
+                players: vec![Player {
+                    name,
+                    hand: vec![],
+                    owned_played_card: vec![],
+                }],
+            };
+        }
+        return game.clone();
+    }
+
+    fn select_card(&self, game: Game, card_id: String) -> Game {
+        if let State::WaitingForCards { playerCount, deck } = game.state {
+            let player_index = (2 - playerCount) as usize;
+            let mut _players = game.players.clone();
+            let mut _deck = deck.clone();
+
+            if let Some(index) = _deck.iter().position(|card| card.id == card_id) {
+                let card = _deck.remove(index);
+                _players[player_index].hand.push(card);    
+            }
+
+            if _players[player_index].hand.len() == 5 {
+                return Game {
+                    state: State::WaitingForCards {
+                        playerCount: playerCount - 1,
+                        deck: generate_deck_of(10),
+                    },
+                    players: _players,
+                };
+            }
+            
+            return Game {
+                state: State::WaitingForCards {
+                    playerCount,
+                    deck: _deck,
+                },
+                players: _players,
+            };
+        }
+        return game.clone(); 
+    }
+    
 }
 
 #[cfg(test)]
