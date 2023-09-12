@@ -61,7 +61,7 @@ fn generate_deck_of(count: u8) -> Vec<Card> {
     let mut deck = vec![];
     for _i in 0..count {
         let value = rng.gen_range(15..26);
-        print!("{:?}", value);
+        // print!("{:?}", value);
         match generate_card(value) {
             Ok(card) => deck.push(card),
             Err(_) => {}
@@ -84,7 +84,6 @@ impl Rules for RulesImpl {
                 _players.push(Player {
                     name,
                     hand: vec![],
-                    owned_played_card: vec![],
                 });
 
                 // TODO: Generate cards for the first players
@@ -101,7 +100,6 @@ impl Rules for RulesImpl {
                 players: vec![Player {
                     name,
                     hand: vec![],
-                    owned_played_card: vec![],
                 }],
             };
         }

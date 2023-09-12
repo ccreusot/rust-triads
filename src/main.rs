@@ -62,16 +62,51 @@ fn main() {
                 let stdin = io::stdin();
                 match stdin.read_line(&mut buffer) {
                     Ok(_) => {
-                        game = execute(&rules_set, game, Command::Register { name: buffer });
+                        game = execute(
+                            &rules_set,
+                            game,
+                            Command::Register {
+                                name: buffer.trim_end().to_string(),
+                            },
+                        );
                     }
                     _ => return,
                 }
             }
-            State::WaitingForCards { playerCount, deck } => { // cpt
-                println!("Player {}'s turn", 3 - playerCount);
+            State::WaitingForCards {
+                playerCount,
+                ref deck,
+            } => {
+                let current_player = game.players[usize::from(2 - playerCount)].clone();
+                println!("{}'s turn", current_player.name);
+                println!("Your hand:");
+                for card in current_player.hand.iter() {
+                    println!("{}", card);
+                }
+                println!("Pick a card from the deck:");
+                for (index, card) in deck.iter().enumerate() {
+                    println!("Card {}:\n{}", index + 1, card);
+                }
 
-
-            },
+                loop {
+                    print!("Your choice: ");
+                    io::stdout().flush().unwrap();
+                    let mut buffer = String::new();
+                    let stdin = io::stdin();
+                    match stdin.read_line(&mut buffer) {
+                        Ok(_) => {
+                            let cleaned_buffer = buffer.trim().to_string();
+                            if let Ok(card_index) = cleaned_buffer.parse::<usize>() {
+                                let card = deck[card_index - 1].clone();
+                                println!("You choose card #{}", card_index);
+                                game = execute(&rules_set, game, Command::SelectCard { card_id: card.id });
+                                break;
+                            }
+                        }
+                        _ => continue,
+                    }
+                }
+            }
             _ => panic!("Game is in an unexpected state"),
         }
     }
@@ -113,8 +148,7 @@ mod tests {
             game.players,
             vec![Player {
                 name: "Player 1".to_string(),
-                hand: vec![],
-                owned_played_card: vec![]
+                hand: vec![]
             }]
         );
     }
@@ -156,13 +190,11 @@ mod tests {
             vec![
                 Player {
                     name: "Player 1".to_string(),
-                    hand: vec![],
-                    owned_played_card: vec![]
+                    hand: vec![]
                 },
                 Player {
                     name: "Player 2".to_string(),
-                    hand: vec![],
-                    owned_played_card: vec![]
+                    hand: vec![]
                 }
             ]
         );
@@ -199,8 +231,7 @@ mod tests {
             game2.players,
             vec![Player {
                 name: "Player 1".to_string(),
-                hand: vec![],
-                owned_played_card: vec![]
+                hand: vec![]
             }]
         );
     }
@@ -229,8 +260,7 @@ mod tests {
             game.players,
             vec![Player {
                 name: "Player 1".to_string(),
-                hand: vec![],
-                owned_played_card: vec![]
+                hand: vec![]
             }]
         );
     }
@@ -244,12 +274,10 @@ mod tests {
                 Player {
                     name: "Player 1".to_string(),
                     hand: vec![],
-                    owned_played_card: vec![],
                 },
                 Player {
                     name: "Player 2".to_string(),
                     hand: vec![],
-                    owned_played_card: vec![],
                 },
             ],
             state: State::WaitingForCards {
@@ -426,12 +454,10 @@ mod tests {
                             right: 4,
                         },
                     ],
-                    owned_played_card: vec![],
                 },
                 Player {
                     name: "Player 2".to_string(),
                     hand: vec![],
-                    owned_played_card: vec![],
                 },
             ],
             state: State::WaitingForCards {

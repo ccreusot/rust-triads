@@ -1,3 +1,4 @@
+use std::fmt::{Display, Error, Formatter, Result};
 #[derive(Clone, Debug, PartialEq)]
 pub struct Card {
     pub id: String,
@@ -12,3 +13,23 @@ impl Card {
         (self.top + self.right + self.bottom + self.left)
     }
 }
+
+impl Display for Card {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(
+            f,
+            "------------
+|    {:02}    |
+| {:02}    {:02} |
+|    {:02}    |
+------------",
+            self.top, self.right, self.bottom, self.left
+        )
+    }
+}
+
+// ------------
+// |    XX    |
+// | XX    XX |
+// |    XX    |
+// ------------

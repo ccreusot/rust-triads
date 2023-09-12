@@ -4,5 +4,4 @@ use crate::card::Card;
 pub struct Player {
     pub name: String,
     pub hand: Vec<Card>,
-    pub owned_played_card: Vec<Card>,
 }
