@@ -1,6 +1,5 @@
 use crate::state::State;
 use crate::player::Player;
-use crate::command::Command;
 
 #[derive(Clone, Debug)]
 pub struct Game {

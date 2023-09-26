@@ -22,6 +22,9 @@ pub fn execute(rules: &impl Rules, game: Game, command: Command) -> Game {
         State::WaitingForCards { .. } => {
             execute_command_for_waiting_for_card_state(rules, game, command)
         }
+        State::WaitingForPlayerToPlay { .. } => {
+            execute_command_for_waiting_for_player_to_play(rules, game, command)
+        }
         _ => panic!("State {:?}: Not implemented yet", game.state),
     }
 }
@@ -44,6 +47,17 @@ fn execute_command_for_waiting_for_card_state(
 ) -> Game {
     match command {
         Command::SelectCard { card_id } => rules.select_card(game, card_id),
+        _ => game.clone(),
+    }
+}
+
+fn execute_command_for_waiting_for_player_to_play(
+    rules: &impl Rules,
+    game: Game,
+    command: Command,
+) -> Game {
+    match command {
+        Command::Play { card_id, x, y } => rules.play_card(game, card_id, x, y),
         _ => game.clone(),
     }
 }
@@ -74,10 +88,10 @@ fn main() {
                 }
             }
             State::WaitingForCards {
-                playerCount,
+                player_count,
                 ref deck,
             } => {
-                let current_player = game.players[usize::from(2 - playerCount)].clone();
+                let current_player = game.players[usize::from(2 - player_count)].clone();
                 println!("{}'s turn", current_player.name);
                 println!("Your hand:");
                 for card in current_player.hand.iter() {
@@ -99,7 +113,11 @@ fn main() {
                             if let Ok(card_index) = cleaned_buffer.parse::<usize>() {
                                 let card = deck[card_index - 1].clone();
                                 println!("You choose card #{}", card_index);
-                                game = execute(&rules_set, game, Command::SelectCard { card_id: card.id });
+                                game = execute(
+                                    &rules_set,
+                                    game,
+                                    Command::SelectCard { card_id: card.id },
+                                );
                                 break;
                             }
                         }
@@ -107,6 +125,7 @@ fn main() {
                     }
                 }
             }
+            // State::WaitingForPlayerToPlay
             _ => panic!("Game is in an unexpected state"),
         }
     }
@@ -178,8 +197,8 @@ mod tests {
 
         // Then
         match game.state {
-            State::WaitingForCards { playerCount, deck } => {
-                assert_eq!(playerCount, 2);
+            State::WaitingForCards { player_count, deck } => {
+                assert_eq!(player_count, 2);
                 assert_eq!(deck.len(), 10);
             }
             _ => assert!(false),
@@ -281,7 +300,7 @@ mod tests {
                 },
             ],
             state: State::WaitingForCards {
-                playerCount: 2,
+                player_count: 2,
                 deck: vec![
                     Card {
                         id: "0".to_string(),
@@ -346,7 +365,7 @@ mod tests {
         assert_eq!(
             game.state,
             State::WaitingForCards {
-                playerCount: 2,
+                player_count: 2,
                 deck: vec![
                     Card {
                         id: "1".to_string(),
@@ -394,7 +413,7 @@ mod tests {
         assert_eq!(
             game2.state,
             State::WaitingForCards {
-                playerCount: 2,
+                player_count: 2,
                 deck: vec![
                     Card {
                         id: "1".to_string(),
@@ -461,7 +480,7 @@ mod tests {
                 },
             ],
             state: State::WaitingForCards {
-                playerCount: 2,
+                player_count: 2,
                 deck: vec![Card {
                     id: "4".to_string(),
                     top: 1,
@@ -522,11 +541,222 @@ mod tests {
                 },
             ]
         );
-        if let State::WaitingForCards { playerCount, deck } = game.state {
-            assert_eq!(playerCount, 1);
+        if let State::WaitingForCards { player_count, deck } = game.state {
+            assert_eq!(player_count, 1);
             assert_eq!(deck.len(), 10);
         } else {
             assert!(false);
         }
+    }
+
+    #[test]
+    fn when_all_players_have_their_cards_selected_should_wait_for_the_player_selected_to_play_first(
+    ) {
+        let rules = RulesImpl {};
+        let mut game = Game {
+            players: vec![
+                Player {
+                    name: "Player 1".to_string(),
+                    hand: vec![
+                        Card {
+                            id: "0".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "1".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "2".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "3".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "4".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                    ],
+                },
+                Player {
+                    name: "Player 2".to_string(),
+                    hand: vec![
+                        Card {
+                            id: "0".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "1".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "2".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "3".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                    ],
+                },
+            ],
+            state: State::WaitingForCards {
+                player_count: 1,
+                deck: vec![Card {
+                    id: "4".to_string(),
+                    top: 1,
+                    bottom: 2,
+                    left: 3,
+                    right: 4,
+                }],
+            },
+        };
+
+        // When
+        game = execute(
+            &rules,
+            game,
+            Command::SelectCard {
+                card_id: "4".to_string(),
+            },
+        );
+
+        if let State::WaitingForPlayerToPlay { player_name } = game.state {
+            assert_eq!(player_name, game.players[0].name);
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn when_the_first_player_play_a_card_it_should_remove_the_card_from_his_hand_and_update_the_board(
+    ) {
+        let rules = RulesImpl {};
+        let mut game = Game {
+            players: vec![
+                Player {
+                    name: "Player 1".to_string(),
+                    hand: vec![
+                        Card {
+                            id: "0".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "1".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "2".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "3".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "4".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                    ],
+                },
+                Player {
+                    name: "Player 2".to_string(),
+                    hand: vec![
+                        Card {
+                            id: "0".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "1".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "2".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "3".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                        Card {
+                            id: "4".to_string(),
+                            top: 1,
+                            bottom: 2,
+                            left: 3,
+                            right: 4,
+                        },
+                    ],
+                },
+            ],
+            state: State::WaitingForPlayerToPlay {
+                player_name: "Player 1".to_string(),
+            },
+        };
+
+        game = execute(
+            &rules,
+            game,
+            Command::Play {
+                card_id: game.players[0].hand[0].id,
+                x: 0,
+                y: 0,
+            },
+        )
     }
 }

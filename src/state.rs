@@ -4,5 +4,6 @@ use crate::card::Card;
 pub enum State {
     WaitingForPlayers { count: u8 },
     // Todo: When Player count decrement we generate a new list of card for the next player
-    WaitingForCards { playerCount: u8, deck: Vec<Card> },
+    WaitingForCards { player_count: u8, deck: Vec<Card> },
+    WaitingForPlayerToPlay {player_name : String },
 }
