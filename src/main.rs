@@ -749,14 +749,26 @@ mod tests {
             },
         };
 
+        let card_id = game.players[0].hand[0].id.clone();
         game = execute(
             &rules,
             game,
             Command::Play {
-                card_id: game.players[0].hand[0].id,
+                card_id: card_id,
                 x: 0,
                 y: 0,
             },
-        )
+        );
+
+        if let State::WaitingForPlayerToPlay { player_name } = game.state {
+            assert_eq!(player_name, game.players[1].name);
+            assert_eq!(game.players[0].hand.len(), 4);
+            match game.board.get_card_at(0, 0) {
+                Ok(Some(card)) => assert!(card.id == card_id),
+                _ => assert!(false)
+            }
+        } else {
+            assert!(false);
+        }
     }
 }
