@@ -9,6 +9,7 @@ mod state;
 // execute(rules, game, command)
 // Test de push : Pour game1 et command1 => function1 est appelée avec arg1, arg2, etc.
 // Test function1 : Appel de function1 avec arg1, arg2, arg3, etc. => res1
+use crate::board::Board;
 use crate::command::Command;
 use crate::game::Game;
 use crate::rules::{Rules, RulesImpl};
@@ -133,6 +134,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use crate::board::Board;
     use crate::card::Card;
     use crate::command::Command;
     use crate::game::Game;
@@ -289,6 +291,7 @@ mod tests {
         // Given
         let rules = RulesImpl {};
         let mut game = Game {
+            board: Board::new(),
             players: vec![
                 Player {
                     name: "Player 1".to_string(),
@@ -440,6 +443,7 @@ mod tests {
         // Given
         let rules = RulesImpl {};
         let mut game = Game {
+            board: Board::new(),
             players: vec![
                 Player {
                     name: "Player 1".to_string(),
@@ -554,6 +558,7 @@ mod tests {
     ) {
         let rules = RulesImpl {};
         let mut game = Game {
+            board: Board::new(),
             players: vec![
                 Player {
                     name: "Player 1".to_string(),
@@ -662,6 +667,7 @@ mod tests {
     ) {
         let rules = RulesImpl {};
         let mut game = Game {
+            board: Board::new(),
             players: vec![
                 Player {
                     name: "Player 1".to_string(),
@@ -754,7 +760,7 @@ mod tests {
             &rules,
             game,
             Command::Play {
-                card_id: card_id,
+                card_id: card_id.clone(),
                 x: 0,
                 y: 0,
             },
@@ -763,12 +769,13 @@ mod tests {
         if let State::WaitingForPlayerToPlay { player_name } = game.state {
             assert_eq!(player_name, game.players[1].name);
             assert_eq!(game.players[0].hand.len(), 4);
-            match game.board.get_card_at(0, 0) {
-                Ok(Some(card)) => assert!(card.id == card_id),
-                _ => assert!(false)
-            }
-        } else {
-            assert!(false);
+            let board = game.board.clone();
+
+            assert_eq!(board.get_cell_owner(0, 0).unwrap(), "Player 1");
+            assert_eq!(board.get_card_at(0, 0).unwrap().unwrap().id, card_id);
         }
+        assert!(false);
     }
+
+    
 }

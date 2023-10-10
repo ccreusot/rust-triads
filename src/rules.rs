@@ -95,13 +95,13 @@ impl Rules for RulesImpl {
                         deck: generate_deck_of(10),
                     },
                     players: _players,
-                    board: game.board.clone()
+                    board: game.board.clone(),
                 };
             }
             return Game {
                 state: State::WaitingForPlayers { count: count - 1 },
                 players: vec![Player { name, hand: vec![] }],
-                board: game.board.clone()
+                board: game.board.clone(),
             };
         }
         return game.clone();
@@ -124,7 +124,7 @@ impl Rules for RulesImpl {
                         player_name: _players[0].name.to_string(),
                     },
                     players: _players,
-                    board: game.board.clone()
+                    board: game.board.clone(),
                 };
             }
 
@@ -135,7 +135,7 @@ impl Rules for RulesImpl {
                         deck: generate_deck_of(10),
                     },
                     players: _players,
-                    board: game.board.clone()
+                    board: game.board.clone(),
                 };
             }
 
@@ -145,7 +145,7 @@ impl Rules for RulesImpl {
                     deck: _deck,
                 },
                 players: _players,
-                board: game.board.clone()
+                board: game.board.clone(),
             };
         }
         return game.clone();
@@ -153,8 +153,19 @@ impl Rules for RulesImpl {
 
     fn play_card(&self, game: Game, card_id: String, x: u8, y: u8) -> Game {
         if let State::WaitingForPlayerToPlay { player_name } = &game.state {
-            let player = game.players.iter().find(|player| player.name == *player_name);
-            
+            let player = game
+                .players
+                .iter()
+                .find(|player| player.name == *player_name);
+            let current_player_id = game
+                .players
+                .iter()
+                .position(|player| player.name == *player_name);
+            let next_player_name = game.players
+                [(current_player_id.unwrap() + 1) % game.players.len()]
+            .name
+            .clone();
+
             match player {
                 None => return game.clone(),
                 Some(player) => {
@@ -163,9 +174,24 @@ impl Rules for RulesImpl {
                         None => return game.clone(),
                         Some(_card) => {
                             let updated_player = player.drop_card(_card);
-                            let updated_board = game.board.set_card_at(_card, x, y);
-                            // go to next player
-                            // return updated game
+                            let updated_board = game.board.set_card_at(player, _card, x, y);
+                            let updated_game = Game {
+                                players: game
+                                    .players
+                                    .iter()
+                                    .map(|player| {
+                                        if player.name == *player_name {
+                                            return updated_player.clone();
+                                        }
+                                        return player.clone();
+                                    })
+                                    .collect::<Vec<Player>>(),
+                                state: State::WaitingForPlayerToPlay {
+                                    player_name: next_player_name,
+                                },
+                                board: updated_board,
+                            };
+                            return updated_game;
                         }
                     }
                 }
