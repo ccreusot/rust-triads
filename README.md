@@ -15,7 +15,8 @@
         - Chacun joue son tour à tour de rôle
         - Une carte capture la carte adverse si elle est plus forte que celle de l'adversaire sur son côté en opposition.
         - Capture c'est le fait de gagné la carte adversaire en prenant la couleur du joueur qui a jouer la carte gagnante.
-        - La victoire est déterminée quand le plateau est rempli au nombre de cartes capturées.
+        - Le jeu se termine quand le plateau est rempli.
+        - La victoire est atrtribué au joueur ayant capturées le plus de cartes.
     - Optionelles:
         - Open : 
             - Les 2 joueurs jouent a main ouverte (les cartes sont visibles des 2 côtés)

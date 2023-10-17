@@ -22,6 +22,8 @@ pub trait Rules {
     // Switch state: WaitingForPlayerToPlay (next player)
     // To state: WaitingForPlayerToPlay
     fn play_card(&self, game: Game, card_id: String, x: u8, y: u8) -> Game;
+
+    fn check_neighbour_cards_to_current_position(&self, game: &Game, card: &Card, x: u8, y: u8) -> Card;
 }
 
 type Randomizer = fn(u8, u8) -> u8;
@@ -198,6 +200,12 @@ impl Rules for RulesImpl {
             }
         }
         return game.clone();
+    }
+
+    // TODO: Return of the function => { [position]: bool }
+    fn check_neighbour_cards_to_current_position(&self, game: &Game, card: &Card, x: u8, y: u8) -> Card {
+        let left_card = game.board.get_card_at(x - 1, y);
+        return left_card.unwrap().unwrap();
     }
 }
 

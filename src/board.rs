@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use crate::card::Card;
+use crate::player::Player;
 
 #[derive(Clone, Debug)]
 pub struct Board {
-    cards: Vec<Option<Card>>,
-    cell_owner: HashMap<u8, String>
+    pub cards: Vec<Option<Card>>,
+    pub cell_owner: HashMap<u8, String>
 }
 
 impl Board {
@@ -24,7 +25,7 @@ impl Board {
         return Ok(self.cards[index].clone());
     }
 
-    pub fn set_card_at(&self, card: &Card, x: u8, y: u8) -> Board {
+    pub fn set_card_at(&self, player: &Player, card: &Card, x: u8, y: u8) -> Board {
         let index = usize::from((x * 3) + y);
         if self.get_card_at(x, y) != Ok(None) {
             return self.clone();
@@ -35,6 +36,10 @@ impl Board {
 
         let mut new_board = self.clone();
         new_board.cards = new_cards;
+
+        let mut new_cell_owner = self.cell_owner.clone();
+        new_cell_owner.insert(index as u8, player.name.clone());
+        new_board.cell_owner = new_cell_owner;
 
         return new_board;
     }
