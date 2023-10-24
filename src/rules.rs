@@ -23,7 +23,13 @@ pub trait Rules {
     // To state: WaitingForPlayerToPlay
     fn play_card(&self, game: Game, card_id: String, x: u8, y: u8) -> Game;
 
-    fn check_neighbour_cards_to_current_position(&self, game: &Game, card: &Card, x: u8, y: u8) -> Card;
+    fn check_neighbour_cards_to_current_position(
+        &self,
+        game: &Game,
+        card: &Card,
+        x: u8,
+        y: u8,
+    ) -> bool;
 }
 
 type Randomizer = fn(u8, u8) -> u8;
@@ -176,7 +182,18 @@ impl Rules for RulesImpl {
                         None => return game.clone(),
                         Some(_card) => {
                             let updated_player = player.drop_card(_card);
-                            let updated_board = game.board.set_card_at(player, _card, x, y);
+                            let mut updated_board =
+                                game.board.set_card_at(&updated_player, _card, x, y);
+                            // TODO: refactor to check the 4 sides
+                            // util cancheckside ? (to check if we should check the side based on side enum & board size)
+                            if self.check_neighbour_cards_to_current_position(&game, _card, x, y) {
+                                updated_board = updated_board.set_cell_owner(
+                                    updated_player.name.clone(),
+                                    x - 1,
+                                    y,
+                                );
+                                print!("{:?}", updated_board.get_cell_owner(0, 0));
+                            }
                             let updated_game = Game {
                                 players: game
                                     .players
@@ -202,10 +219,28 @@ impl Rules for RulesImpl {
         return game.clone();
     }
 
-    // TODO: Return of the function => { [position]: bool }
-    fn check_neighbour_cards_to_current_position(&self, game: &Game, card: &Card, x: u8, y: u8) -> Card {
+    // TODO: refactor to handle a new "side: enum {top, left, right, bottom}" param in order to be able to call the function and give it a side to check
+    // this will result in 4 calls with each side 
+    fn check_neighbour_cards_to_current_position(
+        &self,
+        game: &Game,
+        card: &Card,
+        x: u8,
+        y: u8,
+    ) -> bool {
+        if x == 0 {
+            return false;
+        }
+
         let left_card = game.board.get_card_at(x - 1, y);
-        return left_card.unwrap().unwrap();
+
+        if let Ok(Some(left_card)) = left_card {
+            if card.left > left_card.right {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

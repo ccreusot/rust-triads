@@ -51,4 +51,15 @@ impl Board {
         }
         return Ok(self.cell_owner.get(&index).unwrap().clone());
     }
+
+    pub fn set_cell_owner(&self, owner: String, x: u8, y: u8) -> Board {
+        let index = (x * 3) + y;
+        let mut new_cell_owner = self.cell_owner.clone();
+        new_cell_owner.insert(index, owner);
+
+        return Board {
+            cell_owner: new_cell_owner,
+            cards: self.cards.clone()
+        };
+    }
 }

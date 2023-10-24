@@ -780,26 +780,22 @@ mod tests {
         }
     }
 
+    fn test_capture_param(played_card_pos: (u8, u8), check_capture_pos: (u8, u8)) {
+        let player_card_index: u8 = played_card_pos.0 * 3 + played_card_pos.1;
+        let mut cards = vec![None, None, None, None, None, None, None, None, None];
+        cards[usize::from(player_card_index)] = Some(Card {
+            id: "4".to_string(),
+            top: 1,
+            bottom: 2,
+            left: 3,
+            right: 4,
+        });
 
-#[test]
-fn when_a_card_is_played_with_a_higher_value_that_one_of_his_neighbour_it_should_capture_it(
-) {
-    let rules = RulesImpl {};
+        let rules = RulesImpl {};
         let mut game = Game {
             board: Board {
-                cards: vec![
-                    Some(Card {
-                        id: "4".to_string(),
-                        top: 1,
-                        bottom: 2,
-                        left: 3,
-                        right: 4,
-                    }), None, None,
-                    None, None, None,
-                    None, None, None,
-                ],
-                cell_owner:
-                    HashMap::from([(0u8, "Player 1".to_string())])
+                cards: cards,
+                cell_owner: HashMap::from([(player_card_index, "Player 1".to_string())]),
             },
             players: vec![
                 Player {
@@ -808,37 +804,46 @@ fn when_a_card_is_played_with_a_higher_value_that_one_of_his_neighbour_it_should
                 },
                 Player {
                     name: "Player 2".to_string(),
-                    hand: vec![
-                        Card {
-                            id: "0".to_string(),
-                            top: 1,
-                            bottom: 2,
-                            left: 5,
-                            right: 4,
-                        },
-                    ],
+                    hand: vec![Card {
+                        id: "0".to_string(),
+                        top: 5,
+                        bottom: 5,
+                        left: 5,
+                        right: 5,
+                    }],
                 },
             ],
             state: State::WaitingForPlayerToPlay {
                 player_name: "Player 2".to_string(),
-            }
+            },
         };
 
         let card_id = game.players[1].hand[0].id.clone();
-            game = execute(
-                &rules,
-                game,
-                Command::Play {
-                    card_id: card_id.clone(),
-                    x: 0,
-                    y: 0,
-                },
-            );
+        game = execute(
+            &rules,
+            game,
+            Command::Play {
+                card_id: card_id.clone(),
+                x: check_capture_pos.0,
+                y: check_capture_pos.1,
+            },
+        );
 
         let board = game.board.clone();
-    
-        assert_eq!(board.get_cell_owner(0, 0).unwrap(), "Player 2");
-}
 
+        assert_eq!(
+            board
+                .get_cell_owner(played_card_pos.0, played_card_pos.1)
+                .unwrap(),
+            "Player 2"
+        );
+    }
+
+    #[test]
+    fn when_a_card_is_played_with_a_higher_value_that_one_of_his_neighbour_it_should_capture_it() {
+        test_capture_param((0, 0), (1, 0)); // test capture from left side
+        test_capture_param((0, 0), (0, 1)); // test capture from top side
+        test_capture_param((1, 0), (0, 0)); // test capture from right side
+        test_capture_param((0, 1), (0, 0)); // test capture from bottom side
+    }
 }
-        
