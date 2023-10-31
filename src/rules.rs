@@ -27,8 +27,8 @@ pub trait Rules {
         &self,
         game: &Game,
         card: &Card,
-        x: u8,
-        y: u8,
+        card_position: (u8, u8),
+        check_offset: (i8, i8),
     ) -> bool;
 }
 
@@ -174,69 +174,85 @@ impl Rules for RulesImpl {
             .name
             .clone();
 
-            match player {
-                None => return game.clone(),
-                Some(player) => {
-                    let card = player.hand.iter().find(|card| card.id == card_id);
-                    match card {
-                        None => return game.clone(),
-                        Some(_card) => {
-                            let updated_player = player.drop_card(_card);
-                            let mut updated_board =
-                                game.board.set_card_at(&updated_player, _card, x, y);
-                            // TODO: refactor to check the 4 sides
-                            // util cancheckside ? (to check if we should check the side based on side enum & board size)
-                            if self.check_neighbour_cards_to_current_position(&game, _card, x, y) {
-                                updated_board = updated_board.set_cell_owner(
-                                    updated_player.name.clone(),
-                                    x - 1,
-                                    y,
-                                );
-                                print!("{:?}", updated_board.get_cell_owner(0, 0));
-                            }
-                            let updated_game = Game {
-                                players: game
-                                    .players
-                                    .iter()
-                                    .map(|player| {
-                                        if player.name == *player_name {
-                                            return updated_player.clone();
-                                        }
-                                        return player.clone();
-                                    })
-                                    .collect::<Vec<Player>>(),
-                                state: State::WaitingForPlayerToPlay {
-                                    player_name: next_player_name,
-                                },
-                                board: updated_board,
-                            };
-                            return updated_game;
-                        }
-                    }
-                }
+            if let None = player {
+                return game.clone();
             }
+
+            let player = player.unwrap();
+
+            let card = player.hand.iter().find(|card| card.id == card_id);
+
+            if let None = card {
+                return game.clone();
+            }
+
+            let card = card.unwrap();
+
+            let updated_player = player.drop_card(card);
+            let mut updated_board = game.board.set_card_at(&updated_player, card, x, y);
+
+            let offsets: Vec<(i8, i8)> = vec![(-1, 0), (0, -1), (1, 0), (0, 1)];
+
+            offsets.iter().for_each(|offset| {
+                if self.check_neighbour_cards_to_current_position(&game, card, (x, y), *offset) {
+                    let (x_offset, y_offset) = *offset;
+
+                    updated_board = updated_board.set_cell_owner(
+                        updated_player.name.clone(),
+                        (x as i8 + x_offset) as u8,
+                        (y as i8 + y_offset) as u8,
+                    );
+                }
+            });
+
+            let updated_game = Game {
+                players: game
+                    .players
+                    .iter()
+                    .map(|player| {
+                        if player.name == *player_name {
+                            return updated_player.clone();
+                        }
+                        return player.clone();
+                    })
+                    .collect::<Vec<Player>>(),
+                state: State::WaitingForPlayerToPlay {
+                    player_name: next_player_name,
+                },
+                board: updated_board,
+            };
+            return updated_game;
         }
         return game.clone();
     }
 
-    // TODO: refactor to handle a new "side: enum {top, left, right, bottom}" param in order to be able to call the function and give it a side to check
-    // this will result in 4 calls with each side 
     fn check_neighbour_cards_to_current_position(
         &self,
         game: &Game,
         card: &Card,
-        x: u8,
-        y: u8,
+        card_position: (u8, u8),
+        check_offset: (i8, i8),
     ) -> bool {
-        if x == 0 {
+        let (x_card, y_card) = card_position;
+        let (x_check_offset, y_check_offset) = check_offset;
+        let x_check = x_card as i8 + x_check_offset;
+        let y_check = y_card as i8 + y_check_offset;
+
+        // TODO: Test and handle unauthorized diagonal check
+
+        if x_check < 0 || x_check >= 3 || y_check < 0 || y_check >= 3 {
             return false;
         }
 
-        let left_card = game.board.get_card_at(x - 1, y);
+        let opposed_card = game.board.get_card_at(x_check as u8, y_check as u8);
 
-        if let Ok(Some(left_card)) = left_card {
-            if card.left > left_card.right {
-                return true;
+        if let Ok(Some(opposed_card)) = opposed_card {
+            match check_offset {
+                (-1, 0) => return card.left > opposed_card.right,
+                (1, 0) => return card.right > opposed_card.left,
+                (0, -1) => return card.top > opposed_card.bottom,
+                (0, 1) => return card.bottom > opposed_card.top,
+                _ => return false,
             }
         }
 
