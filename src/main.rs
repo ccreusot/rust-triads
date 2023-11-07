@@ -784,6 +784,7 @@ mod tests {
         played_card: Card,
         played_card_pos: (u8, u8),
         check_capture_pos: (u8, u8),
+        expected_player_name: &str,
         custom_error_message: &str,
     ) {
         let player_card_index: u8 = played_card_pos.0 * 3 + played_card_pos.1;
@@ -834,7 +835,7 @@ mod tests {
             board
                 .get_cell_owner(played_card_pos.0, played_card_pos.1)
                 .unwrap(),
-            "Player 2",
+            expected_player_name,
             "{}",
             custom_error_message
         );
@@ -842,67 +843,70 @@ mod tests {
 
     #[test]
     fn when_a_card_is_played_with_a_higher_value_that_one_of_his_neighbour_it_should_capture_it() {
-        test_capture_param(Card { id: "0".to_string(), top: 0, right: 0, bottom: 0, left: 5}, (0, 0), (1, 0), "capture from left side");
-        test_capture_param(Card { id: "0".to_string(), top: 5, right: 0, bottom: 0, left: 0},(0, 0), (0, 1), "capture from top side");
-        test_capture_param(Card { id: "0".to_string(), top: 0, right: 5, bottom: 0, left: 0},(1, 0), (0, 0), "capture from right side");
-        test_capture_param(Card { id: "0".to_string(), top: 0, right: 0, bottom: 5, left: 0},(0, 1), (0, 0), "capture from bottom side");
+        test_capture_param(Card { id: "0".to_string(), top: 0, right: 0, bottom: 0, left: 5}, (0, 0), (1, 0), "Player 2", "capture from left side");
+        test_capture_param(Card { id: "0".to_string(), top: 5, right: 0, bottom: 0, left: 0},(0, 0), (0, 1), "Player 2", "capture from top side");
+        test_capture_param(Card { id: "0".to_string(), top: 0, right: 5, bottom: 0, left: 0},(1, 0), (0, 0), "Player 2", "capture from right side");
+        test_capture_param(Card { id: "0".to_string(), top: 0, right: 0, bottom: 5, left: 0},(0, 1), (0, 0), "Player 2", "capture from bottom side");
     }
 
     #[test]
     fn when_a_card_is_played_in_diagonal_position_it_should_not_capture_the_card() {
-        let player_card_index: u8 = 0;
-        let mut cards = vec![None, None, None, None, None, None, None, None, None];
-        cards[usize::from(player_card_index)] = Some(Card {
+        test_capture_param(Card { id: "0".to_string(), top: 5, right: 0, bottom: 0, left: 5}, (0, 0), (1, 1), "Player 1", "capture from top left side");
+        test_capture_param(Card { id: "0".to_string(), top: 5, right: 5, bottom: 0, left: 0},(1, 0), (0, 1), "Player 1", "capture from top right side");
+        test_capture_param(Card { id: "0".to_string(), top: 0, right: 5, bottom: 5, left: 0},(1, 1), (0, 0), "Player 1", "capture from bottom right side");
+        test_capture_param(Card { id: "0".to_string(), top: 0, right: 0, bottom: 5, left: 5},(0, 1), (1, 0), "Player 1", "capture from bottom left side");
+    }    
+
+    #[test]
+    fn when_the_last_card_is_played_the_game_should_end_and_give_us_the_winner() {
+        let card = Card {
             id: "4".to_string(),
             top: 1,
             bottom: 2,
             left: 3,
             right: 4,
-        });
-
+        };
+        let mut cards = vec![Some(card.clone()), Some(card.clone()), Some(card.clone()), Some(card.clone()), Some(card.clone()), Some(card.clone()), Some(card.clone()), Some(card.clone()), None];
+        let indexes = HashMap::from([(0u8, "Player 1".to_string()), (1, "Player 2".to_string()), (2, "Player 1".to_string()), (3, "Player 2".to_string()), (4, "Player 1".to_string()), (5, "Player 2".to_string()), (6, "Player 2".to_string()), (7, "Player 1".to_string())]);
+        
         let rules = RulesImpl {};
         let mut game = Game {
             board: Board {
                 cards: cards,
-                cell_owner: HashMap::from([(player_card_index, "Player 1".to_string())]),
+                cell_owner: indexes,
             },
             players: vec![
                 Player {
                     name: "Player 1".to_string(),
-                    hand: vec![],
+                    hand: vec![Card {
+                        id: "5".to_string(),
+                        top: 9,
+                        bottom: 9,
+                        left: 9,
+                        right: 9,
+                    }],
                 },
                 Player {
                     name: "Player 2".to_string(),
-                    hand: vec![Card {id: "0".to_string(), top: 5, right: 5, bottom: 5, left: 5}],
+                    hand: vec![],
                 },
             ],
             state: State::WaitingForPlayerToPlay {
-                player_name: "Player 2".to_string(),
+                player_name: "Player 1".to_string(),
             },
         };
 
-        let card_id = game.players[1].hand[0].id.clone();
+        let card_id = game.players[0].hand[0].id.clone();
         game = execute(
             &rules,
             game,
             Command::Play {
                 card_id: card_id.clone(),
-                x: 1,
-                y: 1,
+                x: 2,
+                y: 2,
             },
         );
 
-        let board = game.board.clone();
-
-        assert_eq!(
-            board
-                .get_cell_owner(0, 0)
-                .unwrap(),
-            "Player 1",
-        );
-        assert!(false);
-        // TODO : Make sure all diagonal can not be captured
-    }    
-
-    // TODO : End game test
+        assert_eq!(game.state, State::EndOfGame { scores: (6, 3), winner: "Player 1".to_string() });
+    }
 }

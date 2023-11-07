@@ -205,6 +205,20 @@ impl Rules for RulesImpl {
                 }
             });
 
+            let mut new_state = State::WaitingForPlayerToPlay {
+                player_name: next_player_name,
+            };
+            if !updated_board.cards.iter().any(|card| *card == None) {
+                let scores: (u8, u8) = (
+                    updated_board.cell_owner.iter().filter(|(_, player)| **player == game.players[0].name.clone()).count() as u8,
+                    updated_board.cell_owner.iter().filter(|(_, player)| **player == game.players[1].name.clone()).count() as u8
+                );
+                new_state = State::EndOfGame {
+                    scores: scores,
+                    winner: if scores.0 > scores.1 { game.players[0].name.clone() } else { game.players[1].name.clone() }
+                }
+            }
+
             let updated_game = Game {
                 players: game
                     .players
@@ -216,10 +230,8 @@ impl Rules for RulesImpl {
                         return player.clone();
                     })
                     .collect::<Vec<Player>>(),
-                state: State::WaitingForPlayerToPlay {
-                    player_name: next_player_name,
-                },
-                board: updated_board,
+                state: new_state.clone(),
+                board: updated_board.clone(),
             };
             return updated_game;
         }
