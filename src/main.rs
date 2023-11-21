@@ -126,7 +126,11 @@ fn main() {
                     }
                 }
             }
-            // State::WaitingForPlayerToPlay
+            State::WaitingForPlayerToPlay { player_name } => {
+                let board = game.board;
+                
+                print!("{}", board);
+            }
             _ => panic!("Game is in an unexpected state"),
         }
     }
