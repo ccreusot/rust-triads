@@ -4,6 +4,7 @@ use crate::card::Card;
 pub struct Player {
     pub name: String,
     pub hand: Vec<Card>,
+    // pub sign: char,
 }
 
 impl Player {
@@ -22,3 +23,5 @@ impl Player {
         }
     }
 }
+
+// TODO: Make the sign attributed to the player

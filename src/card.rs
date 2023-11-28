@@ -1,4 +1,4 @@
-use std::fmt::{Display, Error, Formatter, Result};
+use std::fmt::{Display, Error, Formatter, Result, format};
 #[derive(Clone, Debug, PartialEq)]
 pub struct Card {
     pub id: String,
@@ -11,6 +11,14 @@ pub struct Card {
 impl Card {
     pub fn sum(&self) -> u8 {
         (self.top + self.right + self.bottom + self.left)
+    }
+
+    pub fn to_lines(&self, owner: String) -> [String; 3] {
+        [
+            format!("   {}   |", self.top),
+            format!("   {}   |", self.top),
+            format!("   {}   |", self.top),            
+        ]
     }
 }
 

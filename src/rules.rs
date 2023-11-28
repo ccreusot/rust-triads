@@ -198,7 +198,7 @@ impl Rules for RulesImpl {
                     let (x_offset, y_offset) = *offset;
 
                     updated_board = updated_board.set_cell_owner(
-                        updated_player.name.clone(),
+                        updated_player.clone(),
                         (x as i8 + x_offset) as u8,
                         (y as i8 + y_offset) as u8,
                     );
@@ -210,8 +210,8 @@ impl Rules for RulesImpl {
             };
             if !updated_board.cards.iter().any(|card| *card == None) {
                 let scores: (u8, u8) = (
-                    updated_board.cell_owner.iter().filter(|(_, player)| **player == game.players[0].name.clone()).count() as u8,
-                    updated_board.cell_owner.iter().filter(|(_, player)| **player == game.players[1].name.clone()).count() as u8
+                    updated_board.cell_owner.iter().filter(|(_, player)| player.name == game.players[0].name.clone()).count() as u8,
+                    updated_board.cell_owner.iter().filter(|(_, player)| player.name == game.players[1].name.clone()).count() as u8
                 );
                 new_state = State::EndOfGame {
                     scores: scores,

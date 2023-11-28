@@ -126,8 +126,8 @@ fn main() {
                     }
                 }
             }
-            State::WaitingForPlayerToPlay { player_name } => {
-                let board = game.board;
+            State::WaitingForPlayerToPlay { player_name:_ } => {
+                let board = game.board.clone();
                 
                 print!("{}", board);
             }
@@ -777,7 +777,7 @@ mod tests {
             assert_eq!(game.players[0].hand.len(), 4);
             let board = game.board.clone();
 
-            assert_eq!(board.get_cell_owner(0, 0).unwrap(), "Player 1");
+            assert_eq!(board.get_cell_owner(0, 0).unwrap().name, "Player 1");
             assert_eq!(board.get_card_at(0, 0).unwrap().unwrap().id, card_id);
         } else {
             assert!(false);
@@ -805,7 +805,7 @@ mod tests {
         let mut game = Game {
             board: Board {
                 cards: cards,
-                cell_owner: HashMap::from([(player_card_index, "Player 1".to_string())]),
+                cell_owner: HashMap::from([(player_card_index, Player { name: "Player 1".to_string(), hand: vec![] })]),
             },
             players: vec![
                 Player {
@@ -838,7 +838,7 @@ mod tests {
         assert_eq!(
             board
                 .get_cell_owner(played_card_pos.0, played_card_pos.1)
-                .unwrap(),
+                .unwrap().name,
             expected_player_name,
             "{}",
             custom_error_message
@@ -871,7 +871,20 @@ mod tests {
             right: 4,
         };
         let mut cards = vec![Some(card.clone()), Some(card.clone()), Some(card.clone()), Some(card.clone()), Some(card.clone()), Some(card.clone()), Some(card.clone()), Some(card.clone()), None];
-        let indexes = HashMap::from([(0u8, "Player 1".to_string()), (1, "Player 2".to_string()), (2, "Player 1".to_string()), (3, "Player 2".to_string()), (4, "Player 1".to_string()), (5, "Player 2".to_string()), (6, "Player 2".to_string()), (7, "Player 1".to_string())]);
+        let player1 = Player { name: "Player 1".to_string(), hand: vec![] };
+        let player2 = Player { name: "Player 2".to_string(), hand: vec![] };
+
+        let indexes = HashMap::from(
+            [
+                (0u8, player1.clone()),
+                (1, player2.clone()),
+                (2, player1.clone()),
+                (3, player2.clone()),
+                (4, player1.clone()),
+                (5, player2.clone()),
+                (6, player2.clone()),
+                (7, player1.clone())
+            ]);
         
         let rules = RulesImpl {};
         let mut game = Game {
